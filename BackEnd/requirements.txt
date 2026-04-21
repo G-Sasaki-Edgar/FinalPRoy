@@ -1,0 +1,9 @@
+# Lista de dependencias para el backend
+# Ejemplo:
+# flask==2.3.4
+Django>=4.2
+mysqlclient
+djangorestframework
+python-dotenv
+djangorestframework-simplejwt
+django-cors-headers
