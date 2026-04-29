@@ -1,7 +1,7 @@
 import { Platform } from 'react-native';
 
 // ⚠️ Cambiá esta IP por la IP de la laptop donde corre el backend
-const BACKEND_IP = '172.29.254.202'; 
+const BACKEND_IP = '13.222.142.14'; 
 
 export const API_URL = Platform.OS === 'web' 
   ? 'http://localhost:8000/api'        // Para navegador web
