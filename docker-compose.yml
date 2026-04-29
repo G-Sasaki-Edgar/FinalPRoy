@@ -60,22 +60,22 @@ services:
     mem_limit: 2g
     cpus: 1.0
 
-  react_native_app:
-    build:
-      context: ./mobile
-    container_name: react_native_app
-    command: npx expo start --web --port 8081
-    volumes:
-      - ./mobile:/app
-      - /app/node_modules
-    ports:
-      - "19000:19000"
-      - "19001:19001"
-      - "8081:8081"
-    stdin_open: true
-    tty: true
-    mem_limit: 2g
-    cpus: 1.0
+#  react_native_app:
+ #   build:
+  #    context: ./Mobile
+   # container_name: react_native_app
+    #command: npx expo start --web --port 8081
+    #volumes:
+    #  - ./Mobile:/app
+    #  - /app/node_modules
+   # ports:
+   #   - "19000:19000"
+   ##   - "19001:19001"
+   #   - "8081:8081"
+   # stdin_open: true
+   # tty: true
+   # mem_limit: 2g
+   # cpus: 1.0
 
   redis:
     image: redis:7-alpine
