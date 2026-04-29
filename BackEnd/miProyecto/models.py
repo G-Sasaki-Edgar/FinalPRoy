@@ -60,10 +60,11 @@ class Entrega(models.Model):
     
     tarea = models.ForeignKey(Tarea, on_delete=models.CASCADE)
     estudiante = models.ForeignKey(User, on_delete=models.CASCADE)
-    contenido = models.TextField(blank=True) # Respuesta o link
+    contenido = models.TextField(blank=True)
     estado = models.CharField(max_length=20, choices=ESTADOS, default='pendiente')
     xp_ganada = models.IntegerField(default=0)
     entregado_en = models.DateTimeField(auto_now=True)
+    comentario_docente = models.TextField(blank=True, null=True)  # ✅
 
     def __str__(self):
         return f"{self.estudiante.username} - {self.tarea.titulo}"
@@ -77,3 +78,23 @@ class Logro(models.Model):
 
     def __str__(self):
         return self.nombre
+    
+class ComentarioTarea(models.Model):
+    tarea = models.ForeignKey(Tarea, on_delete=models.CASCADE, related_name='comentarios')
+    autor = models.ForeignKey(User, on_delete=models.CASCADE)
+    mensaje = models.TextField()
+    creado_en = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Comentario de {self.autor.username} en {self.tarea.titulo}"
+# 7. Relación Usuario - Logro obtenido
+class LogroUsuario(models.Model):
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='logros_obtenidos')
+    logro = models.ForeignKey(Logro, on_delete=models.CASCADE, related_name='usuarios')
+    obtenido_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('usuario', 'logro')  # No duplicar el mismo logro
+
+    def __str__(self):
+        return f"{self.usuario.username} - {self.logro.nombre}"

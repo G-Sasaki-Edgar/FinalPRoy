@@ -3,7 +3,9 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView } from 'react-nativ
 import { LinearGradient } from 'expo-linear-gradient';
 import { Mail, Lock, User, GraduationCap, Users, Eye, Sparkles } from 'lucide-react-native';
 import { GlobalStyles, Colors } from '../../constants/theme';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '../../contexts/AuthContext';
+import { useApi } from '../../hooks/useApi';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function LoginScreen({ navigation }) {
   const [screen, setScreen] = useState('login');
@@ -13,39 +15,63 @@ export default function LoginScreen({ navigation }) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  
+  const { login } = useAuth();
+  const { apiRequest } = useApi();
+
+  useFocusEffect(
+    React.useCallback(() => {
+      setEmail('');
+      setPassword('');
+      setNombre('');
+      setError('');
+      setScreen('login');
+    }, [])
+  );
 
 const handleLogin = async () => {
+ console.log('Enviando:', { email, password }); // ✅ agregar esto
   try {
-    const response = await fetch("http://localhost:8000/api/api/login/", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    const data = await apiRequest('/login/', {
+      method: 'POST',
       body: JSON.stringify({ email, password }),
-    });
+    }, false);// Login público, no token necesario
 
-    const data = await response.json();
+    const userData = {
+      id: data.id,
+      username: data.username,
+      email: data.email,
+      first_name: data.first_name,
+      role: data.role,
+      xp_total: data.xp_total,
+      nivel_actual: data.nivel_actual,
+      avatar: data.avatar,
+    };
+    await login(userData, data.access);
 
-    if (response.ok) {
-      setError("");
-      // Guardar el token en almacenamiento local
-      await AsyncStorage.setItem("token", data.access);
-
-      // Navegar a la pantalla principal
-      navigation.replace("Main");
+    if (data.role === 'estudiante') {
+      navigation.replace('MainEstudiante');
+    } else if (data.role === 'docente') {
+      navigation.replace('MainDocente');
     } else {
-      setError(data.detail || "Error al iniciar sesión");
+      setError('Rol desconocido');
     }
-  } catch (err) {
-    setError("No se pudo conectar al servidor");
+  } catch (error) {
+    setError(error.message);
   }
 };
 
 
+
+
   const handleRegister = async () => {
+    if (!email.trim() || !password.trim() || !nombre.trim()) {
+      setError('Todos los campos son obligatorios.');
+      return;
+    }
+
     try {
-      const response = await fetch("http://localhost:8000/api/api/registro/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const data = await apiRequest('/registro/', {
+        method: 'POST',
         body: JSON.stringify({
           username: email,   // puedes usar el email como username
           email,
@@ -53,19 +79,38 @@ const handleLogin = async () => {
           role,
           first_name: nombre
         }),
-      });
+      }, false); // requireToken: false para registro público
 
-      const data = await response.json();
+      setError("");
+      // Después del registro exitoso, hacer login automáticamente para obtener el token
+      const loginData = await apiRequest('/login/', {
+        method: 'POST',
+        body: JSON.stringify({ email, password }),
+      }, false); // Login público tras registro
 
-      if (response.ok) {
-        setError("");
-        // Después de registrar, puedes navegar al login o loguear automáticamente
-        navigation.replace("Main");
+      const userData = {
+        id: loginData.id,
+        username: loginData.username,
+        email: loginData.email,
+        first_name: loginData.first_name,
+        role: loginData.role,
+        xp_total: loginData.xp_total,
+        nivel_actual: loginData.nivel_actual,
+        avatar: loginData.avatar,
+      };
+      await login(userData, loginData.access);
+
+      // Navegar al dashboard correspondiente
+      if (loginData.role === "estudiante") {
+        navigation.replace("MainEstudiante");
+      } else if (loginData.role === "docente") {
+        navigation.replace("MainDocente");
       } else {
-        setError(data.detail || "Error al registrar usuario");
+        setError("Rol desconocido");
       }
     } catch (err) {
-      setError("No se pudo conectar al servidor");
+      console.error('Error de registro:', err);
+      setError(err.message || "Error desconocido al registrarse");
     }
   };
 
